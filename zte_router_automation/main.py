@@ -52,20 +52,20 @@ with sync_playwright() as p:
                 whitelist_txtbox = page.locator("#texNewMacAddressWhiteList")
                 whitelist_txtbox.fill(mac_addr)
                 expect(whitelist_txtbox).to_be_visible(timeout=6000)
-                print(page.locator("input[type=submit]").all_inner_texts())
-                page.locator("input[value=Apply]").click()
+                
+                # The Apply button is <input type="submit">, not <button>,
+                # so get_by_role("button") won't find it.
+                # Scope to the form and target the submit input directly.
+                whitelist_form = page.locator("#setWhiteListFrm")
+                apply_btn = whitelist_form.locator('input[type="submit"]')
+                expect(apply_btn).to_be_visible(timeout=6000)
+                apply_btn.click()
             else:
                 print("whitelist is not checked...")
                 whitelist_switch.check()
                 page.get_by_text("submit").click()
 
-            # whitelist_switch = page.get_by_role("checkbox", name="White List")
-            # expect(whitelist_switch).to_be_visible(timeout=10000)
-            # is_active = whitelist_switch.is_checked()
-            # if is_active:
-            #     print("whitelist is checked")
-            # else:
-            #     print("whitelist is not checked")
+          
             
         except Exception as e:
             # Fallback: try clicking the sidebar/nav link if direct hash didn't work
