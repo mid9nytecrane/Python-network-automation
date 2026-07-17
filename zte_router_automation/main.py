@@ -1,6 +1,7 @@
 from playwright.sync_api import sync_playwright, expect
 
 passcode = "Sh8448saqqara@99"
+mac_addr = "14:B5:CD:2C:8F:2D"
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=False)  # headless=False helps debug visual issues
@@ -42,10 +43,21 @@ with sync_playwright() as p:
             print('check debug for if statement')
 
             #whitelist_switch = page.get_by_role("radio", name="mac_filter_switch")
-            whitelist_switch = page.get_by_test_id("mac_filter_switch_white")
-            
+            #whitelist_switch = page.get_by_test_id("mac_filter_switch_white")
+            whitelist_switch = page.locator("#mac_filter_switch_white")
             print(whitelist_switch)
-        
+
+            if whitelist_switch.is_checked():
+                print("whitelist is checked.")
+                whitelist_txtbox = page.locator("#texNewMacAddressWhiteList")
+                whitelist_txtbox.fill(mac_addr)
+                expect(whitelist_txtbox).to_be_visible(timeout=6000)
+                print(page.locator("input[type=submit]").all_inner_texts())
+                page.locator("input[value=Apply]").click()
+            else:
+                print("whitelist is not checked...")
+                whitelist_switch.check()
+                page.get_by_text("submit").click()
 
             # whitelist_switch = page.get_by_role("checkbox", name="White List")
             # expect(whitelist_switch).to_be_visible(timeout=10000)
