@@ -5,22 +5,33 @@ from InquirerPy import inquirer
 from pyfiglet import Figlet
 from rich import print,box
 from rich.panel import Panel
-
+from rich.console import Console
+import time
+import json
 from InquirerPy import inquirer
 
 
-f = Figlet(font="slant", width=200)
 
+f = Figlet(font="slant", width=200)
+console = Console()
 
 passcode = "Sh8448saqqara@99"
 MAC_ADDRESS= "14:B5:CD:28:B8:CB"
 
-mac_addr_db = {
-    "OMCP-DMG-001": "14:B5:CD:2E:26:01",
-    "OMCP-DMG-002": "20:BD:1D:8C:C1:DE",
-    "OMCP-DMG-003": "20:BD:1D:11:D5:69",
-    "OMCP-DMG-004": "14:B5:CD:24:C5:51"
-}
+
+try:
+    with open("zte_router_automation/mac_address.json", "r") as file:
+        mac_addr_db = json.load(file)
+except FileNotFoundError:
+    print("File not found or file path isn't correct.")
+except json.JSONDecodeError:
+    print("Invalid JSON strucute detected, (check commas/qoutes).")
+
+print(mac_addr_db)
+
+#time delay
+def time_delay():
+    time.sleep(2)
 
 # adding mac address 
 def add_mac_address():
@@ -34,7 +45,9 @@ def add_mac_address():
     apply_btn = whitelist_form.locator('input[type="submit"]')
     expect(apply_btn).to_be_visible(timeout=6000)
     apply_btn.click()
-    print(f"{mac_addr} - has been added successfully...") 
+
+    time_delay()
+    console.log(f"{mac_addr} - has been added successfully...") 
 
 
 # deleting mac address
@@ -46,13 +59,15 @@ def delete_mac_address():
     expect(del_mac_addr).to_be_visible(timeout=6000)
     del_mac_addr.click()
 
-    print(del_mac_addr.count())
-    print(f"{mac_addr} - has been deleted!!!")
+    #print(del_mac_addr.count())
+    #print(f"{mac_addr} - has been deleted!!!")
+    time_delay()
+    console.log(f"{mac_addr} - has been deleted!!!")
 
 
 
 with sync_playwright() as p:
-    print(Panel.fit(f.renderText("ZTE Router Automation"),box=box.HEAVY, border_style="cyan"))
+    print(f.renderText("ZTE Router Automation"))
     #print(Panel.fit("hello world", title="hello cruel"))
     
 
@@ -105,7 +120,7 @@ with sync_playwright() as p:
                 hostname = ""
 
                 try:
-                    hostname = input("[+]Enter PC's MAC Adress: ").strip()
+                    hostname = input("[+]Enter PC's Hostname : ").strip()
                     mac_addr = mac_addr_db[hostname]
                 except Exception as e:
                     print(f"{hostname} has no mac address or invalid hostname= {hostname}")
@@ -128,20 +143,22 @@ with sync_playwright() as p:
                 #print(all_macs)
 
                 if mac_addr.strip().lower() in [m.lower() for m in all_macs]:
-                    print('mac address exist')
+                    #print('mac address exist')
                     # okay_btn = page.get_by_role("button", name="OK")
                     # expect(okay_btn).to_be_visible(timeout=6000)
                     # okay_btn.click()
 
                     #DELETING MAC ADDRESS
-                    print('deleting mac address...')
+                    time_delay()
+                    console.log('deleting mac address...')
                     delete_mac_address()
 
-                    print("then adding mac address back")
+                    time_delay()
+                    console.log(f"then adding mac address - {mac_addr} back to whitelist...")
                     add_mac_address()
                 else:
-                    print('mac addres does not exist')
-                    print('adding mac address ...')
+                    console.log('adding mac address ...')
+                    console.log('mac addres does not exist')
 
                     add_mac_address()
 
@@ -152,7 +169,7 @@ with sync_playwright() as p:
 
                 page.get_by_text("submit").click()
 
-          
+        
             
         except Exception as e:
             # Fallback: try clicking the sidebar/nav link if direct hash didn't work
