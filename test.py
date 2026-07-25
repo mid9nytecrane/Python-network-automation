@@ -11,11 +11,12 @@
 # console.print("hello world", style="bold red")
 # print("Hello, [bold magenta]World[/bold magenta]!", ":vampire:", locals())
 
-import json 
+# import json 
 
-with open("zte_router_automation/mac_address.json", "r") as file:
-    data = json.load(file)
+# with open("zte_router_automation/mac_address.json", "r") as file:
+#     data = json.load(file)
 
-print(data)
-print()
-print(data["OMCP-DMG-001"])
+# print(data)
+# print()
+# print(data["OMCP-DMG-001"])
+
