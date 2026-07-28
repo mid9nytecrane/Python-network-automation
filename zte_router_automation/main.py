@@ -66,10 +66,7 @@ def delete_mac_address():
     console.log(f"{mac_addr} - has been deleted!!!")
 
 
-# NEW: pulled the raw "read every cell out of #whitelist" step into its
-# own function. Both the status table AND mac_exists_in_whitelist() need
-# this same raw list, so it's read once per call site instead of having
-# two separate near-identical row-parsing loops drift apart over time.
+
 def get_whitelist_cells():
     mac_addr_table = page.locator("#whitelist tr").all()
     all_cells = []
@@ -115,10 +112,7 @@ def run_action():
         remove_mac_address_flow()
 
 
-# NEW: builds and prints a table of every known host from mac_address.json
-# next to whether its mac is currently sitting in the router's whitelist.
-# `current_whitelist_cells` is the raw cell dump from get_whitelist_cells(),
-# passed in once so this doesn't have to re-query the page for every host.
+
 def display_known_hosts_table(current_whitelist_cells):
     lowered_cells = [c.lower() for c in current_whitelist_cells]
 
@@ -161,15 +155,15 @@ def prompt_action_and_host():
 with sync_playwright() as p:
     print(f.renderText("  ZTE Router Automation"))
 
-    browser = p.chromium.launch()
+    browser = p.chromium.launch(headless=False) # visual display of the browser, set to True for headless mode
     page = browser.new_page()
 
     try:
-        page.goto(router_url)
+        page.goto(router_url) #router's urls e.g http://172.168.1.2/login.html
 
         password_field = page.locator('#txtPwd')
         expect(password_field).to_be_visible(timeout=60000)
-        password_field.fill(passcode)
+        password_field.fill(passcode) # router's password e.g 12345678
         page.get_by_text('submit').click()
 
         page.wait_for_load_state("networkidle", timeout=15000)

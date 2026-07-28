@@ -1,3 +1,7 @@
 /.kiro
 /.py_venv
 /zte_router_automation/.env
+/zte_router_automation/mac_address.json
+script.py
+test_script.py
+test.py
