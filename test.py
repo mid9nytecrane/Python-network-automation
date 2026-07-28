@@ -20,3 +20,7 @@
 # print()
 # print(data["OMCP-DMG-001"])
 
+from rich import print
+from rich.padding import Padding
+test = Padding("Hello", (2, 4))
+print(test)
