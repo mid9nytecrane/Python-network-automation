@@ -66,6 +66,46 @@ def delete_mac_address():
     console.log(f"{mac_addr} - has been deleted!!!")
 
 
+# getting connected devices
+def get_connected_devices():
+    connected_devices = page.locator("#deviceInfoWhite tr").all()
+    all_devices = []
+    for row in connected_devices:
+        cells = row.locator("td").all_inner_texts()
+        row_data = [cell.strip() for cell in cells]
+        if len(row_data) >= 2:
+            all_devices.append(row_data)
+
+    return all_devices
+
+
+def mac_exists_in_connected_devices():
+    connected_devices_info = get_connected_devices()
+    # CHANGED: pull the mac out of each row (index 2) instead of comparing
+    # mac_addr against whole row-lists, which could never match.
+    connected_macs = [row[2].lower() for row in connected_devices_info if len(row) >= 3]
+    return mac_addr.strip().lower() in connected_macs
+
+
+# table showing connected devices
+def display_connected_devices_table():
+    connected_devices_info = get_connected_devices()
+
+    table = Table(title="\nConnected Devices", box=box.ROUNDED)
+    table.add_column("#", justify="right", style="cyan")
+    table.add_column("Hostname", style="bold purple")
+    table.add_column("MAC Address")
+
+    for i, row_data in enumerate(connected_devices_info, start=1):
+        # CHANGED: index directly into row_data instead of building a
+        # throwaway 2-item tuple first (row_data[1], row_data[2]) and then
+        # unpacking it with *_ , which silently discarded the rest.
+        hostname = row_data[1].replace("\xa0", " ")
+        mac = row_data[2]
+        table.add_row(str(i), hostname, mac)
+
+    console.print(table)
+
 
 def get_whitelist_cells():
     mac_addr_table = page.locator("#whitelist tr").all()
@@ -94,7 +134,7 @@ def sync_mac_address():
         console.log(f"then adding mac address - {mac_addr} back to whitelist...")
         add_mac_address()
     else:
-        console.log("adding mac address ...")
+        console.log("adding mac address...")
         add_mac_address()
 
 
@@ -110,7 +150,6 @@ def run_action():
         sync_mac_address()
     elif action == "2":
         remove_mac_address_flow()
-
 
 
 def display_known_hosts_table(current_whitelist_cells):
@@ -130,7 +169,11 @@ def display_known_hosts_table(current_whitelist_cells):
     console.print(table)
 
 
-def prompt_action_and_host():
+# CHANGED: this used to have its own `while True: ... return` which
+# always returned on the very first loop, making the while pointless.
+# Now it just prompts once per call — the actual continuous loop lives
+# in the main script below, and calls this once per iteration.
+def prompt_action():
     console.print(
         Panel.fit(
             "[bold cyan][ + ] ZTE Router MAC Whitelist Manager [ + ] [/bold cyan]",
@@ -139,31 +182,36 @@ def prompt_action_and_host():
     )
 
     console.print(
-        "[bold][ 1 ] Add a PC to the whitelist\n[ 2 ] Remove a PC from the whitelist[/bold]"
+        "[bold][ 1 ] Add a PC to the whitelist\n"
+        "[ 2 ] Remove a PC from the whitelist\n"
+        "[ 3 ] Show connected devices\n"
+        "[ done ] Exit[/bold]"
     )
 
     action = Prompt.ask(
         "\n  [bold][ + ] Select Option :[/bold]",
-        choices=["1", "2"],
+        choices=["1", "2", "3", "done"],
     )
+    return action
 
+
+def prompt_hostname():
     hostnames = list(mac_addr_db.keys())
-    hostname = Prompt.ask("  [bold][ + ] Enter PC's hostname [/bold]", choices=hostnames, show_choices=False)
-    return action, hostname
+    return Prompt.ask("  [bold][ + ] Enter PC's hostname [/bold]", choices=hostnames, show_choices=False)
 
 
 with sync_playwright() as p:
     print(f.renderText("  ZTE Router Automation"))
 
-    browser = p.chromium.launch(headless=False) # visual display of the browser, set to True for headless mode
+    browser = p.chromium.launch()
     page = browser.new_page()
 
     try:
-        page.goto(router_url) #router's urls e.g http://172.168.1.2/login.html
+        page.goto(router_url)
 
         password_field = page.locator('#txtPwd')
         expect(password_field).to_be_visible(timeout=60000)
-        password_field.fill(passcode) # router's password e.g 12345678
+        password_field.fill(passcode)
         page.get_by_text('submit').click()
 
         page.wait_for_load_state("networkidle", timeout=15000)
@@ -179,37 +227,50 @@ with sync_playwright() as p:
             whitelist_switch = page.locator("#mac_filter_switch_white")
             whitelist_txtbox = page.locator("#texNewMacAddressWhiteList")
 
-            # MOVED UP: read the live whitelist table BEFORE prompting, so
-            # the "Known Hosts" table can show each host's current status
-            # instead of just listing names blind.
             current_whitelist_cells = get_whitelist_cells()
             display_known_hosts_table(current_whitelist_cells)
 
-            action, hostname = prompt_action_and_host()
-            mac_addr = mac_addr_db[hostname]
+            # NEW: this is the continuous loop the request asked for.
+            # It keeps prompting for an action until the user types "done".
+            # Login/navigation above only runs ONCE, before the loop, so
+            # every action reuses the same already-open page/session.
+            while True:
+                action = prompt_action()
 
-            if mac_addr is None:
-                console.log("[red]No mac address found for the given hostname. Please check the hostname and try again.[/red]")
+                if action == "done":
+                    console.print("[bold green]Session ended.[/bold green]")
+                    break
 
-            elif whitelist_switch.is_checked():
-                print("whitelist is checked.")
-                run_action()
+                if action == "3":
+                    display_connected_devices_table()
+                    continue
 
-            else:
-                print("whitelist is not checked...")
+                # actions "1" and "2" need a target hostname/mac first
+                hostname = prompt_hostname()
+                mac_addr = mac_addr_db[hostname]
 
-                if action == "2":
-                    console.log(f"[yellow]Whitelist isn't enabled - {mac_addr} can't be in it, nothing to delete.[/yellow]")
-                else:
-                    whitelist_switch.check()
-                    mac_filter_form = page.locator("#macFilterForm")
-                    apply_btn = mac_filter_form.locator('input[type="submit"][value="Apply"]')
-                    expect(apply_btn).to_be_visible(timeout=6000)
-                    apply_btn.click()
+                if mac_addr is None:
+                    console.log("[red]No mac address found for the given hostname. Please check the hostname and try again.[/red]")
+                    continue
 
-                    time_delay()
-                    page.wait_for_load_state("networkidle", timeout=15000)
+                if whitelist_switch.is_checked():
+                    print("whitelist is checked.")
                     run_action()
+                else:
+                    print("whitelist is not checked...")
+
+                    if action == "2":
+                        console.log(f"[yellow]Whitelist isn't enabled - {mac_addr} can't be in it, nothing to delete.[/yellow]")
+                    else:
+                        whitelist_switch.check()
+                        mac_filter_form = page.locator("#macFilterForm")
+                        apply_btn = mac_filter_form.locator('input[type="submit"][value="Apply"]')
+                        expect(apply_btn).to_be_visible(timeout=6000)
+                        apply_btn.click()
+
+                        time_delay()
+                        page.wait_for_load_state("networkidle", timeout=15000)
+                        run_action()
 
         except Exception as e:
             print(f"Direct hash navigation failed, trying nav link... {e}")
