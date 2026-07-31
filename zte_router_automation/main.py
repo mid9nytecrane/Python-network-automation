@@ -36,7 +36,7 @@ except json.JSONDecodeError:
 
 # time delay
 def time_delay():
-    time.sleep(2)
+    time.sleep(1)
 
 
 # adding mac address
@@ -161,6 +161,7 @@ def display_known_hosts_table(current_whitelist_cells):
     table.add_column("MAC Address")
     table.add_column("Whitelisted", justify="center")
 
+
     for i, (hostname, mac) in enumerate(mac_addr_db.items(), start=1):
         is_whitelisted = mac.strip().lower() in lowered_cells
         status = "[green]Yes[/green]" if is_whitelisted else "[dim]No[/dim]"
@@ -177,7 +178,7 @@ def prompt_action():
     console.print(
         Panel.fit(
             "[bold cyan][ + ] ZTE Router MAC Whitelist Manager [ + ] [/bold cyan]",
-            box=box.ROUNDED,
+            box=box.DOUBLE_EDGE,
         )
     )
 
