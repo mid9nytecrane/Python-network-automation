@@ -204,7 +204,7 @@ def prompt_hostname():
 with sync_playwright() as p:
     print(f.renderText("  ZTE Router Automation"))
 
-    browser = p.chromium.launch()
+    browser = p.chromium.launch() #headless = False shows a visual display of the automation
     page = browser.new_page()
 
     try:
