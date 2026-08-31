@@ -46,12 +46,11 @@ with sync_playwright() as p:
         disable_no.clear()
         disable_no.fill("0")
 
-        # checking radio button if center is ready
-        # center_ready = page.get_by_role("radio", name="yes")
-        # center_ready.check()
-        q7_container = page.locator("div").filter(has_text="7. Is The Center Ready?")
-        q7_container.get_by_role("radio", name="yes").check()
+        #checking radio button if center is ready
+        center_ready = page.get_by_role("radio", name="yes")
+        center_ready.check()
         
+
 
     except Exception as e:
         print(f'having troubles visiting the link!!! - {e}')
