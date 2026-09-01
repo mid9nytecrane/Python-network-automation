@@ -2,6 +2,7 @@
 /.py_venv
 /zte_router_automation/.env
 /zte_router_automation/mac_address.json
+/daily_report/.env
 script.py
 test_script.py
 test.py
