@@ -1,20 +1,25 @@
 import re
+import os
+from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright, expect,Page
+
+load_dotenv()
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=False)
     page = browser.new_page()
 
     # variables
-    region = "Savannah"
-    district = "DAMONGO"
-    center = "DAMONGO CIC"
-    coordinator = "Sheriff Sakara"
-    phone_no = "0556060306"
-    disability_count = 0
+    region = os.getenv("REGION")
+    district = os.getenv("DISTRICT")
+    center = os.getenv("CENTER")
+    coordinator = os.getenv("COORDINATOR")
+    phone = os.getenv("PHONE")
+    disability_count = "0"
     comment = "No Comments"
+    form_url = os.getenv("WEB_URL")
     try:
-        page.goto("https://forms.cloud.microsoft/pages/responsepage.aspx?id=yhSrr2CrpkKKKf8QFCTzGG5I3GM8yb9CtKmMJNFSqupUOEo5SzBGSzNMSUlKMTVHOEIzVzg0SDhMVy4u&route=shorturl")
+        page.goto(form_url)
 
 
         page.get_by_role("button", name="Start now").click()
@@ -48,7 +53,7 @@ with sync_playwright() as p:
         # filling phone number
         phone_no = page.get_by_label("Telephone Number")
         phone_no.clear()
-        phone_no.fill(phone_no)
+        phone_no.fill(phone)
 
         # filling number of disable people
         disable_no = page.get_by_label("How Many Persons with Disability Attended The Training?")
@@ -108,7 +113,7 @@ with sync_playwright() as p:
 
 
         # submit
-        page.get_by_role("button", name="Submit").click()
+        #page.get_by_role("button", name="Submit").click()
 
 
 
