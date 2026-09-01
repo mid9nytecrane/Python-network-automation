@@ -5,6 +5,14 @@ with sync_playwright() as p:
     browser = p.chromium.launch(headless=False)
     page = browser.new_page()
 
+    # variables
+    region = "Savannah"
+    district = "DAMONGO"
+    center = "DAMONGO CIC"
+    coordinator = "Sheriff Sakara"
+    phone_no = "0556060306"
+    disability_count = 0
+    comment = "No Comments"
     try:
         page.goto("https://forms.cloud.microsoft/pages/responsepage.aspx?id=yhSrr2CrpkKKKf8QFCTzGG5I3GM8yb9CtKmMJNFSqupUOEo5SzBGSzNMSUlKMTVHOEIzVzg0SDhMVy4u&route=shorturl")
 
@@ -15,37 +23,37 @@ with sync_playwright() as p:
 
         #selecting a region
         page.get_by_role("button", name="1. Select your Region").click()
-        region_option = page.get_by_role("option", name="Savannah")
+        region_option = page.get_by_role("option", name=region)
         expect(region_option).to_be_visible(timeout=3000)
         region_option.click()
 
         # selecting district / constituency
         page.get_by_role("button", name="2. Select Your District/Constituency").click()
-        district_option = page.get_by_role("option", name="DAMONGO").first
+        district_option = page.get_by_role("option", name=district).first
         expect(district_option).to_be_visible(timeout=3000)
         district_option.click()
 
         # selecting training center
         page.get_by_role("button", name='3. Select your Training Center').click()
-        training_center = page.get_by_role("option", name="DAMONGO CIC")
+        training_center = page.get_by_role("option", name=center)
         expect(training_center).to_be_visible(timeout=3000)
         training_center.click()
 
         # filling coordinator name
         coordinator_name_input = page.get_by_label('Name of Coordinator')
         coordinator_name_input.clear()
-        coordinator_name_input.fill("John Doe")
+        coordinator_name_input.fill(coordinator)
         expect(coordinator_name_input).to_be_visible(timeout=10000)
 
         # filling phone number
         phone_no = page.get_by_label("Telephone Number")
         phone_no.clear()
-        phone_no.fill("0556060306")
+        phone_no.fill(phone_no)
 
         # filling number of disable people
         disable_no = page.get_by_label("How Many Persons with Disability Attended The Training?")
         disable_no.clear()
-        disable_no.fill("0")
+        disable_no.fill(disability_count)
 
         #checking radio button if center is ready
         center_ready = page.get_by_role("radio", name="yes")
@@ -97,6 +105,10 @@ with sync_playwright() as p:
 
         gender_count = page.get_by_role('textbox', name="What Is the Total Number of Male/Female Participants as of Today? (e.g. Male(s) -15, Female(s) 10)")
         gender_count.fill(formatted_gender_text)
+
+
+        # submit
+        page.get_by_role("button", name="Submit").click()
 
 
 
