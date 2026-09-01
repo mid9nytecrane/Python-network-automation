@@ -83,9 +83,21 @@ with sync_playwright() as p:
         formatted_text = ", ".join(courses)
         print(formatted_text)
         course_taken.fill(formatted_text)
-        # for c in courses:
-        #     print(c)
-        #     course_taken.fill(c)
+
+        # Number of attendees per day
+        attendees = input('Enter the number of Attendees Today: ')
+        attendees_no = page.get_by_label("What is the Total Number of Attendees Today?")
+        attendees_no.fill(attendees)
+
+        # Number of males and females
+        females_count = input("Enter number of Female(s): ")
+        male_count = input("Enter number of Male(s): ")
+
+        formatted_gender_text = f"Male(s) - {male_count}, Female(s) - {females_count}"
+
+        gender_count = page.get_by_role('textbox', name="What Is the Total Number of Male/Female Participants as of Today? (e.g. Male(s) -15, Female(s) 10)")
+        gender_count.fill(formatted_gender_text)
+
 
 
     except Exception as e:
