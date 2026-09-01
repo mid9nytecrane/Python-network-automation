@@ -1,3 +1,4 @@
+import re
 from playwright.sync_api import sync_playwright, expect,Page
 
 with sync_playwright() as p:
@@ -49,7 +50,42 @@ with sync_playwright() as p:
         #checking radio button if center is ready
         center_ready = page.get_by_role("radio", name="yes")
         center_ready.check()
+
+        # adding comment
+        comment_sec = page.get_by_role("textbox", name="8. Observations/Comments")
+        comment_sec.fill("no comment")
+
+        # checking courses
+        course_select = ["UX Designer","Cyber Security", "Data Analyst", "IT Support", \
+                        "Project Management", "AI Essentials", "AI Professional",
+                        "Introduction To Programming", "Frontend Development"
+                         ]
+        #course_check = page.get_by_role("checkbox", name="UX Designer").check()
+        for course in course_select:
+            page.get_by_role("checkbox", name=course).check()
+
+        #specifying course and their number of attendees
+        course_taken = page.get_by_role(
+            "textbox",
+            name="Specify The Course(s) Taken Today and Indicate the Number of Participants for Each Course (e.g., IT Support – 10, UX Designer – 15, Data Analytics – 8 etc...)"
+        )
+
+        courses = []
+        while True:
+            course = input("Enter course with number of participants (or 'done' to finish): ")
         
+            if course.lower() == 'done':
+                break
+            if course:
+                courses.append(course)
+        
+        print(courses)
+        formatted_text = ", ".join(courses)
+        print(formatted_text)
+        course_taken.fill(formatted_text)
+        # for c in courses:
+        #     print(c)
+        #     course_taken.fill(c)
 
 
     except Exception as e:
