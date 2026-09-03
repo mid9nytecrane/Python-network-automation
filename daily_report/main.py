@@ -66,7 +66,7 @@ with sync_playwright() as p:
 
         # adding comment
         comment_sec = page.get_by_role("textbox", name="8. Observations/Comments")
-        comment_sec.fill("no comment")
+        comment_sec.fill("It rained half of today")
 
         # checking courses
         course_select = ["UX Designer","Cyber Security", "Data Analyst", "IT Support", \
