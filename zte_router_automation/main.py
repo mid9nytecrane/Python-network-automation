@@ -1,6 +1,6 @@
 import os
 from playwright.sync_api import sync_playwright, expect
-from InquirerPy import inquirer
+#from InquirerPy import inquirer
 from pyfiglet import Figlet
 from rich import print, box
 from rich.panel import Panel
@@ -204,7 +204,7 @@ def prompt_hostname():
 with sync_playwright() as p:
     print(f.renderText("  ZTE Router Automation"))
 
-    browser = p.chromium.launch() #headless = False shows a visual display of the automation
+    browser = p.chromium.launch(headless=False) #headless = False shows a visual display of the automation
     page = browser.new_page()
 
     try:
