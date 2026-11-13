@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import re
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -93,6 +94,35 @@ def find_in_whitelist(page, mac: str):
         if cell.lower() == target:
             return cell
     return None
+
+def getback_homepage(page) -> None:
+    # '#home' is the real home route (the other link, '#wifi_main_chip1',
+    # is just an intermediate page whose back arrow points to '#home')
+    page.evaluate("window.location.hash = '#home'")
+
+    # Confirm the router actually switched to the home route
+    expect(page).to_have_url(re.compile(r"#home$"), timeout=10000)
+
+    
+
+
+def check_blocked_urls(page) -> None:
+    getback_homepage(page)  # FIX 2: one call is enough
+    page.evaluate("window.location.hash = '#sleep_mode'")
+    #page.wait_for_timeout(2000)
+    page.wait_for_load_state("networkidle", timeout=1500)
+
+    nav_link = page.locator('a[href="#firewall"]')
+
+    expect(nav_link).to_be_visible(timeout=10000)  # 10s instead of 3s, as the SPA menu renders slowly
+    nav_link.click()
+
+    url_filter_link = page.locator('a[href="#url_filter"]')
+    expect(url_filter_link).to_be_visible(timeout=3000)
+    url_filter_link.click()
+
+def block_urls() -> None:
+    ...
 
 
 # adding mac address
@@ -273,12 +303,14 @@ def prompt_action() -> str:
         "[bold][ 1 ] Add a PC to the whitelist\n"
         "[ 2 ] Remove a PC from the whitelist\n"
         "[ 3 ] Show connected devices\n"
+        "[ 4 ] Show blocked urls\n"
+        "[ 5 ] Block URL\n"
         "[ done ] Exit[/bold]"
     )
 
     return Prompt.ask(
         "\n  [bold][ + ] Select Option :[/bold]",
-        choices=["1", "2", "3", "done"],
+        choices=["1", "2", "3","4","5", "done"],
     )
 
 
@@ -321,6 +353,7 @@ def open_mac_filter_page(page) -> None:
 
 def main() -> None:
     console.print(fig.renderText("  ZTE Router Automation"), markup=False)
+   
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)  # headless=False shows the automation visually
@@ -333,9 +366,10 @@ def main() -> None:
             # Login + navigation run ONCE; every menu action reuses this session.
             login(page)
             open_mac_filter_page(page)
+            
 
             while True:
-                display_known_hosts_table(page)
+                #display_known_hosts_table(page)
                 action = prompt_action()
 
                 if action == "done":
@@ -345,10 +379,18 @@ def main() -> None:
                 # FIX: each action has its own try/except, so one failed action
                 # (timeout, missing element...) no longer kills the whole session.
                 try:
+                    
                     if action == "3":
                         display_connected_devices_table(page)
                         continue
 
+                    if action == "4":
+                        print("action 4 taken")
+                        check_blocked_urls(page)
+                        continue
+
+                    if action == "5":
+                        print("action 5 taken")
                     # actions "1" and "2" need a target PC first
                     hostname = prompt_hostname()
                     # FIX: mac_addr_db[hostname] raises KeyError and never returns None,
